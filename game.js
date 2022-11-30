@@ -6,7 +6,21 @@ const upBtn = document.querySelector("#up");
 const leftBtn = document.querySelector("#left");
 const rightBtn = document.querySelector("#right");
 const downBtn = document.querySelector("#down");
+const showLives = document.querySelector("#lives");
+const gameTime = document.querySelector("#time");
+const record = document.querySelector("#record");
+
 let playerPosition = { x: undefined, y: undefined };
+let objColisionPosition = {
+  X: [],
+  I: [],
+};
+let controlX = 0; //cuando se cambie de mapa se debe setear de nuevo en 0
+let levelUpDown = 0;
+let lives = 3;
+let printTime;
+let recordLocalStorage = Number(localStorage.getItem("recordTime"));
+let timePlayed;
 
 /* Se recomienda para efectos de que el CANVAS funcione sin problemas encapsular el código en funciones y ejecutarlas desde un inicio cuando la página cargue asignando un addEventListener a window, para que cuando el HTML acabe de cargar se ejecute*/
 window.addEventListener("load", setCanvasSize);
@@ -21,6 +35,7 @@ function setCanvasSize() {
   //se hace esto para garantizar que no haya scroll vertical u horizontal cuando el alto o ancho son muy grandes
 
   playerPosition = { x: undefined, y: undefined };
+  controlX = 0;
 
   if (window.innerHeight > window.innerWidth) {
     canvasSize = window.innerWidth * 0.8;
@@ -31,6 +46,10 @@ function setCanvasSize() {
   canvas.setAttribute("height", canvasSize);
   elementsSize = canvasSize * 0.1;
 
+  if(localStorage.getItem("recordTime")){
+    record.innerText = recordLocalStorage;
+  }
+
   startGame();
 }
 
@@ -40,8 +59,13 @@ function startGame() {
   //la sintaxis de .font es 10px fuente--- por eso se hace esta concatenación, para enviar el valor del parámetro de acuerdo con su sintaxis.
   game.font = elementsSize + "px Verdana";
   game.textAlign = "end";
+  printLives();
 
-  const map = maps[0];
+  if (!printTime) {
+    timeCounter();
+  }
+
+  const map = maps[0 + levelUpDown];
   const mapRows = map.trim().split("\n");
   const mapCols = mapRows.map((element) => element.trim().split(""));
 
@@ -59,15 +83,26 @@ function startGame() {
           playerPosition.x = posX;
           playerPosition.y = posY;
         }
+      } else if (col == "I") {
+        if (!objColisionPosition.I[0]) {
+          objColisionPosition.I.push({ x: posX, y: posY });
+        }
+      } else if (col == "X") {
+        if (controlX === 0) {
+          objColisionPosition.X.push({ x: posX, y: posY });
+        }
       }
     });
   });
 
   movePlayer();
+  controlX += 1;
 }
 
 function movePlayer() {
   game.fillText(emojis["PLAYER"], playerPosition.x, playerPosition.y);
+  giftColision();
+  bombColision();
 }
 
 function moveByKeyBoard(event) {
@@ -87,27 +122,132 @@ function moveByKeyBoard(event) {
   }
 }
 
+function giftColision() {
+  if (
+    playerPosition.x.toFixed(3) === objColisionPosition.I[0].x.toFixed(3) &&
+    playerPosition.y.toFixed(3) === objColisionPosition.I[0].y.toFixed(3)
+  ) {
+    console.log("Choqué con regalo");
+    levelUpDown += 1;
+    console.log(levelUpDown);
+    objColisionPosition = {
+      X: [],
+      I: [],
+    };
+    controlX = 0;
+    if (levelUpDown == maps.length) {
+      gameWin();
+    } else {
+      startGame();
+    }
+  }
+}
+
+function gameWin() {
+  console.log("No hay más niveles...");
+  clearInterval(printTime);
+
+  //console.log(localStorage.getItem("recordTime"));
+  //console.log(timePlayed);
+  console.log(localStorage.getItem("recordTime"));
+  console.log(timePlayed);
+
+  if(!localStorage.getItem("recordTime")){
+    console.log("Estoy entrando");
+    localStorage.setItem("recordTime", timePlayed);
+    recordLocalStorage = localStorage.getItem("recordTime");
+  } else if(Number(timePlayed) < Number(localStorage.getItem("recordTime"))){
+    console.log(typeof(timePlayed));
+    console.log(localStorage.getItem("recordTime"));
+    console.log(timePlayed);
+
+    localStorage.setItem("recordTime", timePlayed);
+    recordLocalStorage = localStorage.getItem("recordTime");
+  }
+  //recordLocalStorage = localStorage.getItem("recordTime");
+  console.log(recordLocalStorage);
+  record.innerText = recordLocalStorage;
+
+  levelUpDown = 0;
+  //console.log(levelUpDown);
+  lives = 3;
+
+  printTime = undefined; //REVISAR
+  gameTime.innerText = " ";
+  playerPosition = { x: undefined, y: undefined };
+
+  startGame();
+}
+
+function bombColision() {
+  const bombPosition = objColisionPosition.X;
+  //console.log(bombPosition);
+  const thereIsABomb = bombPosition.find((bomb) => {
+    return (
+      bomb.x.toFixed(3) === playerPosition.x.toFixed(3) &&
+      bomb.y.toFixed(3) === playerPosition.y.toFixed(3)
+    );
+  });
+
+  if (thereIsABomb) {
+    console.log("Choqué con una bomba");
+    playerPosition = { x: undefined, y: undefined };
+    objColisionPosition = {
+      X: [],
+      I: [],
+    };
+
+    controlX = 0;
+    lives -= 1;
+
+    if (lives === 0) {
+      console.log("Perdiste el juego");
+      levelUpDown = 0;
+      lives = 3;
+      clearInterval(printTime);
+      printTime = undefined;
+      gameTime.innerText = " ";
+    }
+
+    if (levelUpDown === 0) {
+      //startGame();
+      startGame();
+    } else {
+      //levelUpDown -= 1;
+      playerPosition = { x: undefined, y: undefined };
+      startGame();
+    }
+  }
+}
+
+function printLives() {
+  //showLives.innerText = `${lives}`;
+  showLives.innerText = emojis["HEARTH"].repeat(lives);
+}
+
 function moveUp() {
   console.log("Up");
   if (playerPosition.y > elementsSize) {
     playerPosition.y -= elementsSize;
+    //console.log(playerPosition);
     startGame();
   }
 }
 
 function moveLeft() {
   console.log("Left");
-  if (playerPosition.x >= 2*elementsSize) {
+  if (playerPosition.x > elementsSize) {
     playerPosition.x -= elementsSize;
+    //console.log(playerPosition);
     startGame();
   }
 }
 
 function moveRight() {
   console.log("Right");
-
-  if (playerPosition.x < 10*elementsSize) {
+  if (playerPosition.x < 10 * elementsSize) {
     playerPosition.x += elementsSize;
+    //console.log(playerPosition);
     startGame();
   }
 }
@@ -116,6 +256,15 @@ function moveDown() {
   console.log("Down");
   if (playerPosition.y < 10 * elementsSize) {
     playerPosition.y += elementsSize;
+    //console.log(playerPosition);
     startGame();
   }
+}
+
+function timeCounter() {
+  let i = 0;
+  printTime = setInterval(() => {
+    timePlayed = (i++ / 10).toFixed(1);
+    gameTime.innerText = timePlayed;
+  }, 100);
 }
