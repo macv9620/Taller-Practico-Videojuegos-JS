@@ -60,4 +60,8 @@ body {
   @media (max-width: 440px) {
     button { margin-top: 25px; }
     #up, #down { margin-left: 100%; margin-right: 100%; }
+
+    .game-container {
+      height: 50vh;
+    }
   }

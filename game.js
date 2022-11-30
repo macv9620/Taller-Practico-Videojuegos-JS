@@ -9,6 +9,7 @@ const downBtn = document.querySelector("#down");
 const showLives = document.querySelector("#lives");
 const gameTime = document.querySelector("#time");
 const record = document.querySelector("#record");
+const mensajes = document.querySelector("#mensajes");
 
 let playerPosition = { x: undefined, y: undefined };
 let objColisionPosition = {
@@ -38,15 +39,15 @@ function setCanvasSize() {
   controlX = 0;
 
   if (window.innerHeight > window.innerWidth) {
-    canvasSize = window.innerWidth * 0.8;
+    canvasSize = window.innerWidth * 0.7;
   } else {
-    canvasSize = window.innerHeight * 0.8;
+    canvasSize = window.innerHeight * 0.7;
   }
   canvas.setAttribute("width", canvasSize);
   canvas.setAttribute("height", canvasSize);
   elementsSize = canvasSize * 0.1;
 
-  if(localStorage.getItem("recordTime")){
+  if (localStorage.getItem("recordTime")) {
     record.innerText = recordLocalStorage;
   }
 
@@ -146,27 +147,10 @@ function giftColision() {
 function gameWin() {
   console.log("No hay más niveles...");
   clearInterval(printTime);
+  printRecord();
 
   //console.log(localStorage.getItem("recordTime"));
   //console.log(timePlayed);
-  console.log(localStorage.getItem("recordTime"));
-  console.log(timePlayed);
-
-  if(!localStorage.getItem("recordTime")){
-    console.log("Estoy entrando");
-    localStorage.setItem("recordTime", timePlayed);
-    recordLocalStorage = localStorage.getItem("recordTime");
-  } else if(Number(timePlayed) < Number(localStorage.getItem("recordTime"))){
-    console.log(typeof(timePlayed));
-    console.log(localStorage.getItem("recordTime"));
-    console.log(timePlayed);
-
-    localStorage.setItem("recordTime", timePlayed);
-    recordLocalStorage = localStorage.getItem("recordTime");
-  }
-  //recordLocalStorage = localStorage.getItem("recordTime");
-  console.log(recordLocalStorage);
-  record.innerText = recordLocalStorage;
 
   levelUpDown = 0;
   //console.log(levelUpDown);
@@ -267,4 +251,26 @@ function timeCounter() {
     timePlayed = (i++ / 10).toFixed(1);
     gameTime.innerText = timePlayed;
   }, 100);
+}
+
+function printRecord(){
+  if (!localStorage.getItem("recordTime")) {
+    console.log("Estoy entrando");
+    localStorage.setItem("recordTime", timePlayed);
+    recordLocalStorage = localStorage.getItem("recordTime");
+    mensajes.innerText = "¡Este será tu record inicial!";
+  } else if (Number(timePlayed) < Number(localStorage.getItem("recordTime"))) {
+    console.log(typeof timePlayed);
+    console.log(localStorage.getItem("recordTime"));
+    console.log(timePlayed);
+
+    localStorage.setItem("recordTime", timePlayed);
+    recordLocalStorage = localStorage.getItem("recordTime");
+    mensajes.innerText = "¡¡¡Superaste el record!!!";
+  } else {
+    mensajes.innerText = "No superaste el record pero ¡sigue intentando!";
+  }
+  //recordLocalStorage = localStorage.getItem("recordTime");
+  console.log(recordLocalStorage);
+  record.innerText = recordLocalStorage;
 }
